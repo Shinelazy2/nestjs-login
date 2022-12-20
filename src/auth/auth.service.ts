@@ -1,27 +1,42 @@
 import { UserDTO } from './dtos/user.dto';
 import { UserService } from './user.service';
 import {
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { Payload } from './security/payload.interface';
+import { Payload } from './types/payload.interface';
 import { User } from './user.entity';
 import { JwtService } from '@nestjs/jwt';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
+    private dataSource: DataSource,
     private jwtService: JwtService,
   ) {}
 
+  /**
+   *  회원가입
+   *  1. userDto에서 아이디가 있는지 확인.
+   *  2. user가 있으면 BadRequest,
+   *  3. user가 없으면 save()
+   * @param newUser userDto
+   * @returns typeOrm.save()
+   */
   async registerUser(newUser: UserDTO): Promise<UserDTO> {
-    const userFind: UserDTO = await this.userService.findByFilds({
+    const userFind = await this.userService.findByFilds({
       where: { username: newUser.username },
     });
+    console.log(
+      '🚀 ~ file: auth.service.ts:34 ~ AuthService ~ registerUser ~ userFind',
+      userFind,
+    );
 
     if (userFind) {
       throw new HttpException(
@@ -29,13 +44,36 @@ export class AuthService {
         HttpStatus.BAD_REQUEST,
       );
     }
+    const signUser = await this.userService.save(newUser);
+    console.log(
+      '🚀 ~ file: auth.service.ts:42 ~ AuthService ~ registerUser ~ signUser',
+      signUser,
+    );
 
-    return await this.userService.save(newUser);
+    const tokens = await this.getTokens(signUser.id, signUser.username);
+    this.updateRtHash(signUser.id, tokens.refresh_token);
+    console.log(
+      '🚀 ~ file: auth.service.ts:55 ~ AuthService ~ registerUser ~ tokens.refresh_token',
+      tokens.refresh_token,
+    );
+    return tokens;
   }
 
+  /**
+   * 1. user를 찾아서
+   * 2. userDto와 찾은 password 값을 비교한다.
+   * 3. 비교 후 값이 같으면 payload에 userFind.id, userFind.username
+   * 4. {access_tokens,refresh_token}
+   * @param userDTO
+   * @returns { accessToknes }
+   */
   async validationUser(
     userDTO: UserDTO,
   ): Promise<{ accessToken: string } | undefined> {
+    console.log(
+      '🚀 ~ file: auth.service.ts:55 ~ AuthService ~ userDTO',
+      userDTO,
+    );
     const userFind: User = await this.userService.findByFilds({
       where: { username: userDTO.username },
     });
@@ -44,24 +82,125 @@ export class AuthService {
       userFind,
     );
 
+    if (userFind === null) {
+      throw new UnauthorizedException({ message: '유저를 찾을 수 없음' });
+    }
+
     const validatePassword = await bcrypt.compare(
       userDTO.password,
       userFind.password,
     );
-    if (!userFind || !validatePassword) {
-      throw new UnauthorizedException();
-    }
-    const payload: Payload = { id: userFind.id, username: userFind.username };
-    return {
-      accessToken: this.jwtService.sign(payload),
-    };
-  }
+    console.log(
+      '🚀 ~ file: auth.service.ts:93 ~ AuthService ~ validatePassword',
+      validatePassword,
+    );
 
+    if (!userFind || !validatePassword) {
+      throw new UnauthorizedException({ messgae: '패스워드가 같지 않음' });
+    }
+
+    // const payload: Payload = { id: userFind.id, username: userFind.username };
+    return this.getTokens(userFind.id, userFind.username);
+  }
+  /**
+   * 1. PayLoad.id 로 DB에 있는지 확인
+   * @param payload
+   * @returns User
+   */
   async tokenValidateUser(payload: Payload): Promise<UserDTO | undefined> {
     return await this.userService.findByFilds({
       where: {
         id: payload.id,
       },
     });
+  }
+
+  /**
+   * 토큰발급
+   * @param userId
+   * @param loginId
+   * @returns { access_token, refresh_token}
+   */
+  async getTokens(userId: number, username: string): Promise<any> {
+    const JwtPayload = {
+      id: userId,
+      username,
+    };
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync(JwtPayload, {
+        secret: 'at-secret',
+        expiresIn: '15m',
+      }),
+      this.jwtService.signAsync(JwtPayload, {
+        secret: 'rt-secret',
+        expiresIn: '7d',
+      }),
+    ]);
+    return {
+      access_token: at,
+      refresh_token: rt,
+    };
+  }
+  /**
+   * 토크 저장
+   * @param userId
+   * @param rt
+   */
+  async updateRtHash(userId: number, rt: string) {
+    console.log(
+      '🚀 ~ file: auth.service.ts:140 ~ AuthService ~ updateRtHash ~ rt',
+      rt,
+    );
+    console.log(
+      '🚀 ~ file: auth.service.ts:140 ~ AuthService ~ updateRtHash ~ userId',
+      userId,
+    );
+    const hash = await this.hashData(rt);
+    await this.dataSource
+      .createQueryBuilder()
+      .update(User)
+      .set({ hashedRt: hash })
+      .where('id = :id', { id: userId })
+      .execute();
+  }
+
+  /**
+   * 리프레시 토큰 발급
+   * @param userId
+   * @param rt
+   * @returns
+   */
+  async refreshTokens(userId: number, rt: string) {
+    const user = await this.userService.findByFilds({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user || !user.hashedRt) throw new ForbiddenException('Access Denied');
+
+    const rtMatches = await bcrypt.compare(rt, user.hashedRt);
+    console.log(
+      '🚀 ~ file: auth.service.ts:182 ~ AuthService ~ refreshTokens ~ rtMatches',
+      rtMatches,
+    );
+
+    if (!rtMatches) throw new ForbiddenException('Access Denied');
+
+    const tokens = await this.getTokens(user.id, user.username);
+    console.log(
+      '🚀 ~ file: auth.service.ts:183 ~ AuthService ~ refreshTokens ~ tokens',
+      tokens,
+    );
+    await this.updateRtHash(user.id, tokens.refresh_token);
+    return tokens;
+  }
+  /**
+   * 암호화
+   * @param data
+   * @returns
+   */
+  hashData(data: string) {
+    console.log('hashdata : ', data);
+    return bcrypt.hash(data, 10);
   }
 }

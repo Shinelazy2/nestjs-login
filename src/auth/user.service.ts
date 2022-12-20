@@ -15,9 +15,21 @@ export class UserService {
     return await this.userRepository.findOne(options);
   }
 
-  async save(userDTO: UserDTO): Promise<UserDTO | undefined> {
+  async update(text: unknown, options: unknown) {
+    return await this.userRepository.update(options, text);
+  }
+
+  /**
+   *
+   * @param userDTO
+   * @returns
+   */
+  async save(userDTO: UserDTO): Promise<User | undefined | any> {
     await this.trancsFormPassword(userDTO);
-    console.log('userDTO : ', userDTO);
+    return await this.userRepository.save(userDTO);
+  }
+
+  async save2(userDTO: UserDTO): Promise<User | undefined | any> {
     return await this.userRepository.save(userDTO);
   }
 

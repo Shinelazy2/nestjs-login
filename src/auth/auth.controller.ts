@@ -1,10 +1,22 @@
-import { JwtStrategy } from './security/passport.jwt.strategy';
+import { AtStrategy } from './security/at.jwt.strategy';
 import { AuthService } from './auth.service';
-import { Get, Body, Controller, Post, Req, Res } from '@nestjs/common';
+import {
+  Get,
+  Body,
+  Controller,
+  Post,
+  Req,
+  Res,
+  HttpStatus,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { UserDTO } from './dtos/user.dto';
-import { UseGuards } from '@nestjs/common/decorators';
-import { JwtAuthGuard } from './security/auth.guard';
+import { HttpCode, UseGuards } from '@nestjs/common/decorators';
+import { AtGuard } from './security/at.guard';
+import { Public } from './decorators/public.decorator';
+import { RtGuard } from './security/rt.guard';
+import { GetCurrentUserId } from './decorators/get-current-userId.decorator';
+import { GetCurrentUser } from './decorators/get-current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -26,9 +38,28 @@ export class AuthController {
   }
 
   @Get('/authenticate')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AtGuard)
   isAuthenticated(@Req() req: Request): any {
+    console.log(
+      '🚀 ~ file: auth.controller.ts:43 ~ AuthController ~ isAuthenticated ~ req',
+      req,
+    );
     const user: any = req.user;
+    console.log(
+      '🚀 ~ file: auth.controller.ts:44 ~ AuthController ~ isAuthenticated ~ user',
+      user,
+    );
     return user;
+  }
+
+  @Public()
+  @UseGuards(RtGuard)
+  @Post('/refresh')
+  @HttpCode(HttpStatus.OK)
+  async refreshTokens(
+    @GetCurrentUserId() userId: number,
+    @GetCurrentUser('refreshToken') refreshToken: string,
+  ) {
+    return this.authService.refreshTokens(userId, refreshToken);
   }
 }
