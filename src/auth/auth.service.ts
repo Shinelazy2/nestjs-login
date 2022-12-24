@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { CreateDTO } from './dtos/create.dto';
 import { UserDTO } from './dtos/user.dto';
 import { UserService } from './user.service';
@@ -19,6 +20,7 @@ export class AuthService {
     private dataSource: DataSource,
     private jwtService: JwtService,
     @InjectRepository(UserAuthority) private authorityRepository: Repository<UserAuthority>,
+    private configService: ConfigService,
   ) {}
 
   /**
@@ -136,11 +138,11 @@ export class AuthService {
     };
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(JwtPayload, {
-        secret: 'at-secret',
+        secret: this.configService.get<string>('AT_SECRET'),
         expiresIn: '15m',
       }),
       this.jwtService.signAsync(JwtPayload, {
-        secret: 'rt-secret',
+        secret: this.configService.get<string>('RT_SECRET'),
         expiresIn: '7d',
       }),
     ]);
