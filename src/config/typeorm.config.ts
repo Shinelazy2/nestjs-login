@@ -15,7 +15,8 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       port: this.configService.get<number>('DB_PORT'),
       entities: ['dist/**/*.entity.{ts,js}'],
       synchronize: false,
-      migrations: ['migrations/*.js'],
+      logging: true,
+      // migrations: ['migrations/*.js'],
       autoLoadEntities: true,
     };
   }

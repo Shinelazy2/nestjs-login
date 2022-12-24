@@ -1,3 +1,4 @@
+import { RolesGuard } from './security/role.guard';
 import { AtStrategy } from './security/at.jwt.strategy';
 import { AuthService } from './auth.service';
 import {
@@ -17,6 +18,8 @@ import { Public } from './decorators/public.decorator';
 import { RtGuard } from './security/rt.guard';
 import { GetCurrentUserId } from './decorators/get-current-userId.decorator';
 import { GetCurrentUser } from './decorators/get-current-user.decorator';
+import { Roles } from './decorators/role.decorator';
+import { RoleType } from './role-type';
 
 @Controller('auth')
 export class AuthController {
@@ -57,9 +60,21 @@ export class AuthController {
   @Post('/refresh')
   @HttpCode(HttpStatus.OK)
   async refreshTokens(
-    @GetCurrentUserId() userId: number,
+    @GetCurrentUserId() userId: string,
     @GetCurrentUser('refreshToken') refreshToken: string,
   ) {
+    console.log(
+      '🚀 ~ file: auth.controller.ts:63 ~ AuthController ~ userId',
+      userId,
+    );
     return this.authService.refreshTokens(userId, refreshToken);
+  }
+
+  @Get('/admin-role')
+  @UseGuards(AtGuard, RolesGuard)
+  @Roles(RoleType.ADMIN)
+  adminRoleCheck(@Req() req: Request): any {
+    const user: any = req.user;
+    return user;
   }
 }

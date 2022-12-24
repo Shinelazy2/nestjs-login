@@ -12,18 +12,18 @@ export class AtGuard extends AuthGuard('jwt') {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    console.log(
-      '🚀 ~ file: at.guard.ts:15 ~ AtGuard ~ classAtGuardextendsAuthGuard ~ context',
-      context,
-    );
+    // console.log(
+    //   '🚀 ~ file: at.guard.ts:15 ~ AtGuard ~ classAtGuardextendsAuthGuard ~ context',
+    //   context,
+    // );
     const isPublic = this.reflector.getAllAndOverride('isPublic', [
       context.getHandler(),
       context.getClass(),
     ]);
-    console.log(
-      '🚀 ~ file: at.guard.ts ~ line 13 ~ AtGuard ~ canActivate ~ isPublic',
-      isPublic,
-    );
+    // console.log(
+    //   '🚀 ~ file: at.guard.ts ~ line 13 ~ AtGuard ~ canActivate ~ isPublic',
+    //   isPublic,
+    // );
 
     if (isPublic) return true;
     return super.canActivate(context);
