@@ -1,3 +1,4 @@
+import { RoleType } from './../role-type';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from './user.entity';
 
@@ -13,8 +14,9 @@ export class UserAuthority {
 
   @Column('varchar', {
     name: 'authority_name',
+    default: RoleType.USER,
   })
-  authorityName: string;
+  authorityName: RoleType;
 
   @ManyToOne((type) => User, (user) => user.authorities)
   @JoinColumn({

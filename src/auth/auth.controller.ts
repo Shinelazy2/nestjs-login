@@ -1,5 +1,5 @@
+import { CreateDTO } from './dtos/create.dto';
 import { RolesGuard } from './security/role.guard';
-import { AtStrategy } from './security/at.jwt.strategy';
 import { AuthService } from './auth.service';
 import { Get, Body, Controller, Post, Req, Res, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
@@ -18,22 +18,12 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('/register')
-  async registerAccount(
-    @Req()
-    req: Request,
-    @Body()
-    userDTO: UserDTO,
-  ): Promise<any> {
-    return await this.authService.registerUser(userDTO);
+  async registerAccount(@Req() req: Request, @Body() createDTO: CreateDTO): Promise<any> {
+    return await this.authService.registerUser(createDTO);
   }
 
   @Post('/login')
-  async login(
-    @Body()
-    userDTO: UserDTO,
-    @Res()
-    res: Response,
-  ): Promise<any> {
+  async login(@Body() userDTO: UserDTO, @Res() res: Response): Promise<any> {
     const jwt = await this.authService.validationUser(userDTO);
     res.setHeader('Autorization', 'Bearer ' + jwt.accessToken);
     return res.json(jwt);
@@ -41,10 +31,7 @@ export class AuthController {
 
   @Get('/authenticate')
   @UseGuards(AtGuard)
-  isAuthenticated(
-    @Req()
-    req: Request,
-  ): any {
+  isAuthenticated(@Req() req: Request): any {
     console.log('🚀 ~ file: auth.controller.ts:43 ~ AuthController ~ isAuthenticated ~ req', req);
     const user: any = req.user;
     console.log('🚀 ~ file: auth.controller.ts:44 ~ AuthController ~ isAuthenticated ~ user', user);
@@ -55,12 +42,7 @@ export class AuthController {
   @UseGuards(RtGuard)
   @Post('/refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshTokens(
-    @GetCurrentUserId()
-    userId: string,
-    @GetCurrentUser('refreshToken')
-    refreshToken: string,
-  ) {
+  async refreshTokens(@GetCurrentUserId() userId: string, @GetCurrentUser('refreshToken') refreshToken: string) {
     console.log('🚀 ~ file: auth.controller.ts:63 ~ AuthController ~ userId', userId);
     return this.authService.refreshTokens(userId, refreshToken);
   }
@@ -68,10 +50,7 @@ export class AuthController {
   @Get('/admin-role')
   @UseGuards(AtGuard, RolesGuard)
   @Roles(RoleType.ADMIN)
-  adminRoleCheck(
-    @Req()
-    req: Request,
-  ): any {
+  adminRoleCheck(@Req() req: Request): any {
     const user: any = req.user;
     return user;
   }

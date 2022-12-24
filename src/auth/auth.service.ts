@@ -1,3 +1,4 @@
+import { CreateDTO } from './dtos/create.dto';
 import { UserDTO } from './dtos/user.dto';
 import { UserService } from './user.service';
 import { ForbiddenException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
@@ -5,11 +6,20 @@ import * as bcrypt from 'bcrypt';
 import { Payload } from './types/payload.interface';
 import { User } from './entity/user.entity';
 import { JwtService } from '@nestjs/jwt';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { UserAuthority } from './entity/user-authority.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { RoleType } from './role-type';
+import { BadRequestException } from '@nestjs/common/exceptions';
 
 @Injectable()
 export class AuthService {
-  constructor(private userService: UserService, private dataSource: DataSource, private jwtService: JwtService) {}
+  constructor(
+    private userService: UserService,
+    private dataSource: DataSource,
+    private jwtService: JwtService,
+    @InjectRepository(UserAuthority) private authorityRepository: Repository<UserAuthority>,
+  ) {}
 
   /**
    *  회원가입
@@ -19,12 +29,16 @@ export class AuthService {
    * @param newUser userDto
    * @returns typeOrm.save()
    */
-  async registerUser(newUser: UserDTO): Promise<UserDTO> {
+  async registerUser(newUser: CreateDTO): Promise<UserDTO> {
     const userFind = await this.userService.findByFilds({
       where: {
         username: newUser.username,
       },
     });
+    // const test: UserAuthority = {
+    //   authorityName: 'sdf',
+    // };
+
     // console.log('🚀 ~ file: auth.service.ts:34 ~ AuthService ~ registerUser ~ userFind', userFind);
 
     if (userFind) {
@@ -32,6 +46,11 @@ export class AuthService {
     }
     const signUser = await this.userService.save(newUser);
     // console.log('🚀 ~ file: auth.service.ts:42 ~ AuthService ~ registerUser ~ signUser', signUser);
+
+    const test = new UserAuthority();
+    test.authorityName = newUser.role;
+    test.user = signUser;
+    this.authorityRepository.save(test);
 
     const tokens = await this.getTokens(signUser.id, signUser.username);
     this.updateRtHash(signUser.id, tokens.refresh_token);
@@ -50,12 +69,7 @@ export class AuthService {
    * @param userDTO
    * @returns { accessToknes }
    */
-  async validationUser(userDTO: UserDTO): Promise<
-    | {
-        accessToken: string;
-      }
-    | undefined
-  > {
+  async validationUser(userDTO: UserDTO): Promise<{ accessToken: string } | undefined> {
     // console.log('🚀 ~ file: auth.service.ts:55 ~ AuthService ~ userDTO', userDTO);
     const userFind: User = await this.userService.findByFilds({
       where: {
@@ -147,12 +161,8 @@ export class AuthService {
     await this.dataSource
       .createQueryBuilder()
       .update(User)
-      .set({
-        hashedRt: hash,
-      })
-      .where('id = :id', {
-        id: userId,
-      })
+      .set({ hashedRt: hash })
+      .where('id = :id', { id: userId })
       .execute();
   }
 
