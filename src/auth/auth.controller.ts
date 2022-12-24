@@ -1,15 +1,7 @@
 import { RolesGuard } from './security/role.guard';
 import { AtStrategy } from './security/at.jwt.strategy';
 import { AuthService } from './auth.service';
-import {
-  Get,
-  Body,
-  Controller,
-  Post,
-  Req,
-  Res,
-  HttpStatus,
-} from '@nestjs/common';
+import { Get, Body, Controller, Post, Req, Res, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { UserDTO } from './dtos/user.dto';
 import { HttpCode, UseGuards } from '@nestjs/common/decorators';
@@ -27,14 +19,21 @@ export class AuthController {
 
   @Post('/register')
   async registerAccount(
-    @Req() req: Request,
-    @Body() userDTO: UserDTO,
+    @Req()
+    req: Request,
+    @Body()
+    userDTO: UserDTO,
   ): Promise<any> {
     return await this.authService.registerUser(userDTO);
   }
 
   @Post('/login')
-  async login(@Body() userDTO: UserDTO, @Res() res: Response): Promise<any> {
+  async login(
+    @Body()
+    userDTO: UserDTO,
+    @Res()
+    res: Response,
+  ): Promise<any> {
     const jwt = await this.authService.validationUser(userDTO);
     res.setHeader('Autorization', 'Bearer ' + jwt.accessToken);
     return res.json(jwt);
@@ -42,16 +41,13 @@ export class AuthController {
 
   @Get('/authenticate')
   @UseGuards(AtGuard)
-  isAuthenticated(@Req() req: Request): any {
-    console.log(
-      '🚀 ~ file: auth.controller.ts:43 ~ AuthController ~ isAuthenticated ~ req',
-      req,
-    );
+  isAuthenticated(
+    @Req()
+    req: Request,
+  ): any {
+    console.log('🚀 ~ file: auth.controller.ts:43 ~ AuthController ~ isAuthenticated ~ req', req);
     const user: any = req.user;
-    console.log(
-      '🚀 ~ file: auth.controller.ts:44 ~ AuthController ~ isAuthenticated ~ user',
-      user,
-    );
+    console.log('🚀 ~ file: auth.controller.ts:44 ~ AuthController ~ isAuthenticated ~ user', user);
     return user;
   }
 
@@ -60,20 +56,22 @@ export class AuthController {
   @Post('/refresh')
   @HttpCode(HttpStatus.OK)
   async refreshTokens(
-    @GetCurrentUserId() userId: string,
-    @GetCurrentUser('refreshToken') refreshToken: string,
+    @GetCurrentUserId()
+    userId: string,
+    @GetCurrentUser('refreshToken')
+    refreshToken: string,
   ) {
-    console.log(
-      '🚀 ~ file: auth.controller.ts:63 ~ AuthController ~ userId',
-      userId,
-    );
+    console.log('🚀 ~ file: auth.controller.ts:63 ~ AuthController ~ userId', userId);
     return this.authService.refreshTokens(userId, refreshToken);
   }
 
   @Get('/admin-role')
   @UseGuards(AtGuard, RolesGuard)
   @Roles(RoleType.ADMIN)
-  adminRoleCheck(@Req() req: Request): any {
+  adminRoleCheck(
+    @Req()
+    req: Request,
+  ): any {
     const user: any = req.user;
     return user;
   }

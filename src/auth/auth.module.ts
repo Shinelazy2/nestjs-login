@@ -15,7 +15,9 @@ import { RtStrategy } from './security/rt.jwt.strategy';
     TypeOrmModule.forFeature([User, UserAuthority]),
     JwtModule.register({
       secret: 'secret_key',
-      signOptions: { expiresIn: '300s' },
+      signOptions: {
+        expiresIn: '300s',
+      },
     }),
     PassportModule,
   ],

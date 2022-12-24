@@ -33,7 +33,9 @@ export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
     // );
     if (!user) {
       return done(
-        new UnauthorizedException({ message: 'user doew not exist' }),
+        new UnauthorizedException({
+          message: 'user doew not exist',
+        }),
         false,
       );
     }

@@ -1,12 +1,6 @@
 import { UserDTO } from './dtos/user.dto';
 import { UserService } from './user.service';
-import {
-  ForbiddenException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ForbiddenException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Payload } from './types/payload.interface';
 import { User } from './entity/user.entity';
@@ -15,11 +9,7 @@ import { DataSource } from 'typeorm';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private userService: UserService,
-    private dataSource: DataSource,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private userService: UserService, private dataSource: DataSource, private jwtService: JwtService) {}
 
   /**
    *  회원가입
@@ -31,24 +21,17 @@ export class AuthService {
    */
   async registerUser(newUser: UserDTO): Promise<UserDTO> {
     const userFind = await this.userService.findByFilds({
-      where: { username: newUser.username },
+      where: {
+        username: newUser.username,
+      },
     });
-    // console.log(
-    //   '🚀 ~ file: auth.service.ts:34 ~ AuthService ~ registerUser ~ userFind',
-    //   userFind,
-    // );
+    // console.log('🚀 ~ file: auth.service.ts:34 ~ AuthService ~ registerUser ~ userFind', userFind);
 
     if (userFind) {
-      throw new HttpException(
-        'Username already userd!',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Username already userd!', HttpStatus.BAD_REQUEST);
     }
     const signUser = await this.userService.save(newUser);
-    // console.log(
-    //   '🚀 ~ file: auth.service.ts:42 ~ AuthService ~ registerUser ~ signUser',
-    //   signUser,
-    // );
+    // console.log('🚀 ~ file: auth.service.ts:42 ~ AuthService ~ registerUser ~ signUser', signUser);
 
     const tokens = await this.getTokens(signUser.id, signUser.username);
     this.updateRtHash(signUser.id, tokens.refresh_token);
@@ -67,36 +50,33 @@ export class AuthService {
    * @param userDTO
    * @returns { accessToknes }
    */
-  async validationUser(
-    userDTO: UserDTO,
-  ): Promise<{ accessToken: string } | undefined> {
-    // console.log(
-    //   '🚀 ~ file: auth.service.ts:55 ~ AuthService ~ userDTO',
-    //   userDTO,
-    // );
+  async validationUser(userDTO: UserDTO): Promise<
+    | {
+        accessToken: string;
+      }
+    | undefined
+  > {
+    // console.log('🚀 ~ file: auth.service.ts:55 ~ AuthService ~ userDTO', userDTO);
     const userFind: User = await this.userService.findByFilds({
-      where: { username: userDTO.username },
+      where: {
+        username: userDTO.username,
+      },
     });
-    // console.log(
-    //   '🚀 ~ file: auth.service.ts:42 ~ AuthService ~ userFind',
-    //   userFind,
-    // );
+    // console.log('🚀 ~ file: auth.service.ts:42 ~ AuthService ~ userFind', userFind);
 
     if (userFind === null) {
-      throw new UnauthorizedException({ message: '유저를 찾을 수 없음' });
+      throw new UnauthorizedException({
+        message: '유저를 찾을 수 없음',
+      });
     }
 
-    const validatePassword = await bcrypt.compare(
-      userDTO.password,
-      userFind.password,
-    );
-    // console.log(
-    //   '🚀 ~ file: auth.service.ts:93 ~ AuthService ~ validatePassword',
-    //   validatePassword,
-    // );
+    const validatePassword = await bcrypt.compare(userDTO.password, userFind.password);
+    // console.log('🚀 ~ file: auth.service.ts:93 ~ AuthService ~ validatePassword', validatePassword);
 
     if (!userFind || !validatePassword) {
-      throw new UnauthorizedException({ messgae: '패스워드가 같지 않음' });
+      throw new UnauthorizedException({
+        messgae: '패스워드가 같지 않음',
+      });
     }
     this.convertInAuthorities(userFind);
     // const payload: Payload = { id: userFind.id, username: userFind.username };
@@ -134,11 +114,7 @@ export class AuthService {
    * @param loginId
    * @returns { access_token, refresh_token}
    */
-  async getTokens(
-    userId: string,
-    username: string,
-    authorities?: any[],
-  ): Promise<any> {
+  async getTokens(userId: string, username: string, authorities?: any[]): Promise<any> {
     const JwtPayload = {
       id: userId,
       username,
@@ -165,20 +141,18 @@ export class AuthService {
    * @param rt
    */
   async updateRtHash(userId: string, rt: string) {
-    // console.log(
-    //   '🚀 ~ file: auth.service.ts:140 ~ AuthService ~ updateRtHash ~ rt',
-    //   rt,
-    // );
-    // console.log(
-    //   '🚀 ~ file: auth.service.ts:140 ~ AuthService ~ updateRtHash ~ userId',
-    //   userId,
-    // );
+    // console.log('🚀 ~ file: auth.service.ts:140 ~ AuthService ~ updateRtHash ~ rt', rt);
+    // console.log('🚀 ~ file: auth.service.ts:140 ~ AuthService ~ updateRtHash ~ userId', userId);
     const hash = await this.hashData(rt);
     await this.dataSource
       .createQueryBuilder()
       .update(User)
-      .set({ hashedRt: hash })
-      .where('id = :id', { id: userId })
+      .set({
+        hashedRt: hash,
+      })
+      .where('id = :id', {
+        id: userId,
+      })
       .execute();
   }
 
@@ -197,18 +171,12 @@ export class AuthService {
     if (!user || !user.hashedRt) throw new ForbiddenException('Access Denied');
 
     const rtMatches = await bcrypt.compare(rt, user.hashedRt);
-    // console.log(
-    //   '🚀 ~ file: auth.service.ts:182 ~ AuthService ~ refreshTokens ~ rtMatches',
-    //   rtMatches,
-    // );
+    // console.log('🚀 ~ file: auth.service.ts:182 ~ AuthService ~ refreshTokens ~ rtMatches', rtMatches);
 
     if (!rtMatches) throw new ForbiddenException('Access Denied');
 
     const tokens = await this.getTokens(user.id, user.username);
-    console.log(
-      '🚀 ~ file: auth.service.ts:183 ~ AuthService ~ refreshTokens ~ tokens',
-      tokens,
-    );
+    // console.log('🚀 ~ file: auth.service.ts:183 ~ AuthService ~ refreshTokens ~ tokens', tokens);
     await this.updateRtHash(user.id, tokens.refresh_token);
     return tokens;
   }
@@ -218,7 +186,7 @@ export class AuthService {
    * @returns
    */
   hashData(data: string) {
-    console.log('hashdata : ', data);
+    // console.log('hashdata : ', data);
     return bcrypt.hash(data, 10);
   }
 
@@ -226,7 +194,9 @@ export class AuthService {
     if (user && user.authorities) {
       const authorities: any[] = [];
       user.authorities.forEach((authority) => {
-        authorities.push({ name: authority.authorityName });
+        authorities.push({
+          name: authority.authorityName,
+        });
       });
 
       user.authorities = authorities;

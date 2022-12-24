@@ -10,9 +10,7 @@ import { User } from '../entity/user.entity';
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const roles = this.reflector.get<string[]>('roles', context.getHandler());
     console.log('🚀 ~ file: role.guard.ts:17 ~ RolesGuard ~ roles', roles);
 
@@ -30,10 +28,6 @@ export class RolesGuard implements CanActivate {
     /**
      * roles.includes > 권한 체크
      */
-    return (
-      user &&
-      user.authorities &&
-      user.authorities.some((role) => roles.includes(role))
-    );
+    return user && user.authorities && user.authorities.some((role) => roles.includes(role));
   }
 }

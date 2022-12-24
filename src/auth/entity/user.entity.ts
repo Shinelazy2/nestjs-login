@@ -12,7 +12,9 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ nullable: true })
+  @Column({
+    nullable: true,
+  })
   hashedRt: string;
 
   @OneToMany((type) => UserAuthority, (userAuthority) => userAuthority.user, {
