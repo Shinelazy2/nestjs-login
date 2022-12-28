@@ -1,11 +1,12 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe());
-
+  app.use(cookieParser());
   const whitelist = ['http://localhost:9000'];
   app.enableCors({
     origin: function (origin, callback) {
@@ -15,7 +16,7 @@ async function bootstrap() {
         callback(new Error('Not allowed by CORS'));
       }
     },
-    allowedHeaders: '*',
+    allowedHeaders: ['Content-Type', '*'],
     methods: 'GET,PUT,PATCH,POST,DELETE,UPDATE,OPTIONS',
     credentials: true,
   });

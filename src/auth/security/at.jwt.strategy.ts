@@ -9,7 +9,13 @@ import { Payload } from '../types/payload.interface';
 export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private authService: AuthService, private configService: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      // jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (request) => {
+          console.log('request?.cookies : ', request?.cookies);
+          return request?.cookies.jwt.access_token;
+        },
+      ]),
       // ignoreExpiration: true,
       secretOrKey: configService.get<string>('AT_SECRET'),
     });

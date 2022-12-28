@@ -192,6 +192,12 @@ export class AuthService {
     await this.updateRtHash(user.id, tokens.refresh_token);
     return tokens;
   }
+
+  // async makeCookie(jwt: any) {
+  //   const test = 'setset','asdasd';
+  //   return jwt;
+  // }
+
   /**
    * 암호화
    * @param data
