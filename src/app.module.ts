@@ -8,6 +8,8 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
 import { TypeOrmConfigService } from './config/typeorm.config';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { ApprovalsModule } from './approvals/approvals.module';
+import { VacationModule } from './vacation/vacation.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { AuthModule } from './auth/auth.module';
       useClass: TypeOrmConfigService,
     }),
     AuthModule,
+    ApprovalsModule,
+    VacationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

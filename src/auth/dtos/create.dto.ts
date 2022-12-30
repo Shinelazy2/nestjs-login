@@ -1,11 +1,14 @@
 import { RoleType } from './../role-type';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateDTO {
+export class CreateUserDTO {
   id: string;
 
   @IsNotEmpty()
-  username: string;
+  userId: string;
+
+  @IsString()
+  userName: string;
 
   @IsNotEmpty()
   password: string;

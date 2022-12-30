@@ -1,4 +1,4 @@
-import { CreateDTO } from './dtos/create.dto';
+import { CreateUserDTO } from './dtos/create.dto';
 import { RolesGuard } from './security/role.guard';
 import { AuthService } from './auth.service';
 import { Get, Body, Controller, Post, Req, Res, HttpStatus } from '@nestjs/common';
@@ -19,7 +19,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('/register')
-  async registerAccount(@Req() req: Request, @Res() res: Response, @Body() createDTO: CreateDTO): Promise<any> {
+  async registerAccount(@Req() req: Request, @Res() res: Response, @Body() createDTO: CreateUserDTO): Promise<any> {
     const jwt = await this.authService.registerUser(createDTO);
     res.cookie('jwt', jwt, {
       httpOnly: true,

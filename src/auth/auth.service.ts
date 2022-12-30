@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { CreateDTO } from './dtos/create.dto';
+import { CreateUserDTO } from './dtos/create.dto';
 import { UserDTO } from './dtos/user.dto';
 import { UserService } from './user.service';
 import { ForbiddenException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
@@ -31,10 +31,10 @@ export class AuthService {
    * @param newUser userDto
    * @returns typeOrm.save()
    */
-  async registerUser(newUser: CreateDTO): Promise<UserDTO> {
+  async registerUser(newUser: CreateUserDTO): Promise<UserDTO> {
     const userFind = await this.userService.findByFilds({
       where: {
-        username: newUser.username,
+        userId: newUser.userId,
       },
     });
     // const test: UserAuthority = {
@@ -44,7 +44,7 @@ export class AuthService {
     // console.log('🚀 ~ file: auth.service.ts:34 ~ AuthService ~ registerUser ~ userFind', userFind);
 
     if (userFind) {
-      throw new HttpException('Username already userd!', HttpStatus.BAD_REQUEST);
+      throw new HttpException('userId already userd!', HttpStatus.BAD_REQUEST);
     }
     const signUser = await this.userService.save(newUser);
     // console.log('🚀 ~ file: auth.service.ts:42 ~ AuthService ~ registerUser ~ signUser', signUser);
@@ -54,7 +54,7 @@ export class AuthService {
     test.user = signUser;
     this.authorityRepository.save(test);
 
-    const tokens = await this.getTokens(signUser.id, signUser.username);
+    const tokens = await this.getTokens(signUser.id, signUser.userId);
     this.updateRtHash(signUser.id, tokens.refresh_token);
     // console.log(
     //   '🚀 ~ file: auth.service.ts:55 ~ AuthService ~ registerUser ~ tokens.refresh_token',
@@ -66,7 +66,7 @@ export class AuthService {
   /**
    * 1. user를 찾아서
    * 2. userDto와 찾은 password 값을 비교한다.
-   * 3. 비교 후 값이 같으면 payload에 userFind.id, userFind.username
+   * 3. 비교 후 값이 같으면 payload에 userFind.id, userFind.userId
    * 4. {access_tokens,refresh_token}
    * @param userDTO
    * @returns { accessToknes }
@@ -75,7 +75,7 @@ export class AuthService {
     // console.log('🚀 ~ file: auth.service.ts:55 ~ AuthService ~ userDTO', userDTO);
     const userFind: User = await this.userService.findByFilds({
       where: {
-        username: userDTO.username,
+        userId: userDTO.userId,
       },
     });
     // console.log('🚀 ~ file: auth.service.ts:42 ~ AuthService ~ userFind', userFind);
@@ -95,8 +95,8 @@ export class AuthService {
       });
     }
     this.convertInAuthorities(userFind);
-    // const payload: Payload = { id: userFind.id, username: userFind.username };
-    return this.getTokens(userFind.id, userFind.username, userFind.authorities);
+    // const payload: Payload = { id: userFind.id, userId: userFind.userId };
+    return this.getTokens(userFind.id, userFind.userId, userFind.authorities);
   }
   /**
    * 1. PayLoad.id 로 DB에 있는지 확인
@@ -130,11 +130,11 @@ export class AuthService {
    * @param loginId
    * @returns { access_token, refresh_token}
    */
-  async getTokens(userId: string, username: string, authorities?: any[]): Promise<any> {
+  async getTokens(id: string, userId: string, authorities?: any[]): Promise<any> {
     const JwtPayload = {
-      id: userId,
-      username,
-      authorities: authorities,
+      id,
+      userId,
+      authorities,
     };
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(JwtPayload, {
@@ -187,7 +187,7 @@ export class AuthService {
 
     if (!rtMatches) throw new ForbiddenException('Access Denied');
 
-    const tokens = await this.getTokens(user.id, user.username);
+    const tokens = await this.getTokens(user.id, user.userId);
     // console.log('🚀 ~ file: auth.service.ts:183 ~ AuthService ~ refreshTokens ~ tokens', tokens);
     await this.updateRtHash(user.id, tokens.refresh_token);
     return tokens;
