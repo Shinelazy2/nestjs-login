@@ -1,9 +1,8 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateApprovalDTO {
-  @IsString()
   @IsNotEmpty()
-  approver: string;
+  approver: string[];
 
   @IsNotEmpty()
   approvalKinds: string;

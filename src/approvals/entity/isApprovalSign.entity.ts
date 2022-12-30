@@ -9,23 +9,16 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
 } from 'typeorm';
-import { IsApprovalSign } from './isApprovalSign.entity';
+import { Approval } from './approval.entity';
 // import { UserAuthority } from './user-authority.entity';
 
-@Entity('approval')
-export class Approval {
+@Entity('is_approval_sign')
+export class IsApprovalSign {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  repoter: string;
-
-  @Column('simple-array')
-  approver: string[];
-
-  // TODO: ENUM
-  @Column()
-  approvalKinds: string;
+  name: string;
 
   @Column('string', {
     name: 'approval_join_id',
@@ -33,19 +26,19 @@ export class Approval {
   approvalJoinId: string;
 
   @CreateDateColumn()
-  repoteDate: Date;
+  regDt: Date;
+
+  @Column({ nullable: true })
+  signImage: string;
 
   @UpdateDateColumn()
   signDate: Date;
 
-  @ManyToOne((type) => Vacation, (vacation) => vacation.approval)
+  @ManyToOne((type) => Approval, (approval) => approval.isApprovalSign)
   @JoinColumn({
     name: 'approval_join_id',
   })
-  vacation?: Vacation;
-
-  @OneToMany((type) => IsApprovalSign, (isApprovalSign) => isApprovalSign.approval)
-  isApprovalSign?: IsApprovalSign[];
+  approval?: Approval;
 
   // @OneToMany((type) => UserAuthority, (userAuthority) => userAuthority.user, {
   //   eager: true,

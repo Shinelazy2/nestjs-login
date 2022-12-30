@@ -1,8 +1,10 @@
+import { IsApprovalSign } from './entity/isApprovalSign.entity';
 import { Injectable } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from 'src/auth/user.service';
 import { VacationService } from 'src/vacation/vacation.service';
-import { Repository } from 'typeorm';
+import { FindOneOptions, Repository } from 'typeorm';
 import { CreateApprovalDTO } from './dtos/create-approval.dto';
 import { Approval } from './entity/approval.entity';
 
@@ -10,6 +12,7 @@ import { Approval } from './entity/approval.entity';
 export class ApprovalsService {
   constructor(
     @InjectRepository(Approval) private approvalRepository: Repository<Approval>,
+    @InjectRepository(IsApprovalSign) private isApprovalSignRepository: Repository<IsApprovalSign>,
     private vacationService: VacationService,
   ) {}
 
@@ -21,29 +24,49 @@ export class ApprovalsService {
    */
   async registerApproval(dto: CreateApprovalDTO, userId: string) {
     const { approvalKinds, approver } = dto;
+    let kindOfId: any;
+    if (approvalKinds === '휴가') {
+      kindOfId = await this.vacationService.findByFilds({
+        where: {
+          joinUserId: userId,
+        },
+      });
+    }
 
-    const findVacation = await this.vacationService.findByFilds({
-      where: {
-        joinUserId: userId,
-      },
-    });
-    console.log(
-      '🚀 ~ file: approvals.service.ts:37 ~ ApprovalsService ~ registerApproval ~ findVacation',
-      findVacation,
-    );
+    // TODO: 휴가가 아니면 ?
 
-    // find User, Vacation
-
+    if (!kindOfId) {
+      throw new BadRequestException({ message: '결재 유형을 선택하세요.' });
+    }
     const approval = this.approvalRepository.create();
     approval.repoter = userId;
     approval.approver = approver;
     approval.approvalKinds = approvalKinds;
     // Vacation Id
-    approval.approvalJoinId = findVacation.id;
+    approval.approvalJoinId = kindOfId.id;
+    const saveApproval = await this.approvalRepository.save(approval);
+
     console.log('🚀 ~ file: approvals.service.ts:43 ~ ApprovalsService ~ registerApproval ~ approval', approval);
     // approval.vacation =
 
-    this.approvalRepository.save(approval);
+    /**
+     * 결재 아이디를 알아야하는데.. ?
+     * 1. 저장하고 해야하나?
+     */
+
+    await Promise.all([
+      saveApproval.approver.forEach(async (value) => {
+        const isApprovalSign: IsApprovalSign = this.isApprovalSignRepository.create();
+        isApprovalSign.approvalJoinId = saveApproval.id;
+        isApprovalSign.name = value;
+        console.log('🚀 ~ file: approvals.service.ts:54 ~ ApprovalsService ~ approver.forEach ~ isApprovalSign', value);
+        await this.isApprovalSignRepository.save(isApprovalSign);
+      }),
+    ]);
     return '';
+  }
+
+  async findByFilds(options: FindOneOptions<Approval>): Promise<Approval | undefined> {
+    return await this.approvalRepository.findOne(options);
   }
 }
