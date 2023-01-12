@@ -63,7 +63,7 @@ export class ApprovalsService {
         await this.isApprovalSignRepository.save(isApprovalSign);
       }),
     ]);
-    return '';
+    return saveApproval;
   }
 
   async findByFilds(options: FindOneOptions<Approval>): Promise<Approval | undefined> {
