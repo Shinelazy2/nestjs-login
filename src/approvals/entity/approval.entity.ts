@@ -28,19 +28,16 @@ export class Approval {
   approvalKinds: string;
 
   @Column('string', {
-    name: 'approval_join_id',
+    name: 'vacation_join_id',
   })
-  approvalJoinId: string;
+  vacationJoinId: string;
 
   @CreateDateColumn()
-  repoteDate: Date;
-
-  @UpdateDateColumn()
-  signDate: Date;
+  createAt: Date;
 
   @ManyToOne((type) => Vacation, (vacation) => vacation.approval)
   @JoinColumn({
-    name: 'approval_join_id',
+    name: 'vacation_join_id',
   })
   vacation?: Vacation;
 

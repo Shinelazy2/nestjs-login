@@ -22,28 +22,28 @@ export class ApprovalsService {
    * 2. 휴가 몇일 남았는지 어떻게 알지?
    * @returns
    */
-  async registerApproval(dto: CreateApprovalDTO, userId: string) {
+  async registerApproval(dto: CreateApprovalDTO, userById: string) {
     const { approvalKinds, approver } = dto;
-    let kindOfId: any;
+    let vacation = undefined;
     if (approvalKinds === '휴가') {
-      kindOfId = await this.vacationService.findByFilds({
+      vacation = await this.vacationService.findByFilds({
         where: {
-          joinUserId: userId,
+          userJoinId: userById,
         },
       });
     }
 
     // TODO: 휴가가 아니면 ?
 
-    if (!kindOfId) {
-      throw new BadRequestException({ message: '결재 유형을 선택하세요.' });
+    if (!vacation) {
+      throw new BadRequestException({ message: '등록된 휴가가 없습니다.' });
     }
     const approval = this.approvalRepository.create();
-    approval.repoter = userId;
+    approval.repoter = userById;
     approval.approver = approver;
     approval.approvalKinds = approvalKinds;
     // Vacation Id
-    approval.approvalJoinId = kindOfId.id;
+    approval.vacationJoinId = vacation.id;
     const saveApproval = await this.approvalRepository.save(approval);
 
     console.log('🚀 ~ file: approvals.service.ts:43 ~ ApprovalsService ~ registerApproval ~ approval', approval);

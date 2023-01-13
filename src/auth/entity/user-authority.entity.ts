@@ -8,9 +8,9 @@ export class UserAuthority {
   id: string;
 
   @Column('string', {
-    name: 'user_id',
+    name: 'user_join_id',
   })
-  userId: string;
+  joinUserId: string;
 
   @Column('varchar', {
     name: 'authority_name',
@@ -20,7 +20,7 @@ export class UserAuthority {
 
   @ManyToOne((type) => User, (user) => user.authorities)
   @JoinColumn({
-    name: 'user_id',
+    name: 'user_join_id',
   })
   user: User;
 }

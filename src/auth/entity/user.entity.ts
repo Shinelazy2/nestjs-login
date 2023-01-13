@@ -8,7 +8,7 @@ export class User {
   id: string;
 
   @Column()
-  userId: string;
+  loginId: string;
 
   @Column({ nullable: true })
   userName: string;

@@ -7,5 +7,5 @@ export class CreateVacationDTO {
 
   @IsString()
   @IsNotEmpty()
-  joinUserId: string;
+  userJoinId: string;
 }

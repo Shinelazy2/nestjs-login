@@ -34,7 +34,7 @@ export class AuthService {
   async registerUser(newUser: CreateUserDTO): Promise<UserDTO> {
     const userFind = await this.userService.findByFilds({
       where: {
-        userId: newUser.userId,
+        loginId: newUser.loginId,
       },
     });
     // const test: UserAuthority = {
@@ -44,7 +44,7 @@ export class AuthService {
     // console.log('🚀 ~ file: auth.service.ts:34 ~ AuthService ~ registerUser ~ userFind', userFind);
 
     if (userFind) {
-      throw new HttpException('userId already userd!', HttpStatus.BAD_REQUEST);
+      throw new HttpException('loginId already userd!', HttpStatus.BAD_REQUEST);
     }
     const signUser = await this.userService.save(newUser);
     // console.log('🚀 ~ file: auth.service.ts:42 ~ AuthService ~ registerUser ~ signUser', signUser);
@@ -54,7 +54,7 @@ export class AuthService {
     test.user = signUser;
     this.authorityRepository.save(test);
 
-    const tokens = await this.getTokens(signUser.id, signUser.userId);
+    const tokens = await this.getTokens(signUser.id, signUser.loginId);
     this.updateRtHash(signUser.id, tokens.refresh_token);
     // console.log(
     //   '🚀 ~ file: auth.service.ts:55 ~ AuthService ~ registerUser ~ tokens.refresh_token',
@@ -66,7 +66,7 @@ export class AuthService {
   /**
    * 1. user를 찾아서
    * 2. userDto와 찾은 password 값을 비교한다.
-   * 3. 비교 후 값이 같으면 payload에 userFind.id, userFind.userId
+   * 3. 비교 후 값이 같으면 payload에 userFind.id, userFind.loginId
    * 4. {access_tokens,refresh_token}
    * @param userDTO
    * @returns { accessToknes }
@@ -75,7 +75,7 @@ export class AuthService {
     // console.log('🚀 ~ file: auth.service.ts:55 ~ AuthService ~ userDTO', userDTO);
     const userFind: User = await this.userService.findByFilds({
       where: {
-        userId: userDTO.userId,
+        loginId: userDTO.loginId,
       },
     });
     // console.log('🚀 ~ file: auth.service.ts:42 ~ AuthService ~ userFind', userFind);
@@ -95,8 +95,8 @@ export class AuthService {
       });
     }
     this.convertInAuthorities(userFind);
-    // const payload: Payload = { id: userFind.id, userId: userFind.userId };
-    return this.getTokens(userFind.id, userFind.userId, userFind.authorities);
+    // const payload: Payload = { id: userFind.id, loginId: userFind.loginId };
+    return this.getTokens(userFind.id, userFind.loginId, userFind.authorities);
   }
   /**
    * 1. PayLoad.id 로 DB에 있는지 확인
@@ -126,14 +126,14 @@ export class AuthService {
 
   /**
    * 토큰발급
-   * @param userId
+   * @param loginId
    * @param loginId
    * @returns { access_token, refresh_token}
    */
-  async getTokens(id: string, userId: string, authorities?: any[]): Promise<any> {
+  async getTokens(id: string, loginId: string, authorities?: any[]): Promise<any> {
     const JwtPayload = {
       id,
-      userId,
+      loginId,
       authorities,
     };
     const [at, rt] = await Promise.all([
@@ -153,31 +153,31 @@ export class AuthService {
   }
   /**
    * 토크 저장
-   * @param userId
+   * @param loginId
    * @param rt
    */
-  async updateRtHash(userId: string, rt: string) {
+  async updateRtHash(loginId: string, rt: string) {
     // console.log('🚀 ~ file: auth.service.ts:140 ~ AuthService ~ updateRtHash ~ rt', rt);
-    // console.log('🚀 ~ file: auth.service.ts:140 ~ AuthService ~ updateRtHash ~ userId', userId);
+    // console.log('🚀 ~ file: auth.service.ts:140 ~ AuthService ~ updateRtHash ~ loginId', loginId);
     const hash = await this.hashData(rt);
     await this.dataSource
       .createQueryBuilder()
       .update(User)
       .set({ hashedRt: hash })
-      .where('id = :id', { id: userId })
+      .where('id = :id', { id: loginId })
       .execute();
   }
 
   /**
    * 리프레시 토큰 발급
-   * @param userId
+   * @param loginId
    * @param rt
    * @returns
    */
-  async refreshTokens(userId: string, rt: string) {
+  async refreshTokens(loginId: string, rt: string) {
     const user = await this.userService.findByFilds({
       where: {
-        id: userId,
+        id: loginId,
       },
     });
     if (!user || !user.hashedRt) throw new ForbiddenException('Access Denied');
@@ -187,7 +187,7 @@ export class AuthService {
 
     if (!rtMatches) throw new ForbiddenException('Access Denied');
 
-    const tokens = await this.getTokens(user.id, user.userId);
+    const tokens = await this.getTokens(user.id, user.loginId);
     // console.log('🚀 ~ file: auth.service.ts:183 ~ AuthService ~ refreshTokens ~ tokens', tokens);
     await this.updateRtHash(user.id, tokens.refresh_token);
     return tokens;
@@ -219,6 +219,22 @@ export class AuthService {
 
       user.authorities = authorities;
     }
+    return user;
+  }
+
+  async userList() {
+    return await this.userService.findByAllFilds();
+  }
+
+  async getUser(loginId: string) {
+    const user = await this.userService.findByFilds({
+      where: {
+        loginId,
+      },
+    });
+
+    if (!user) throw new ForbiddenException('조회유저없음');
+
     return user;
   }
 }

@@ -15,16 +15,16 @@ export class Vacation {
   created_at: Date;
 
   @Column('string', {
-    name: 'join_user_id',
+    name: 'user_join_id',
   })
-  joinUserId: string;
+  userJoinId: string;
 
   @OneToMany((type) => Approval, (approval) => approval.vacation)
   approval?: Approval[];
 
   @OneToOne((type) => User, (user) => user.vacation)
   @JoinColumn({
-    name: 'join_user_id',
+    name: 'user_join_id',
   })
   user!: User;
 }

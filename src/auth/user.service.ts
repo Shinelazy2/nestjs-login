@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOneOptions, Repository } from 'typeorm';
+import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
 import { UserDTO } from './dtos/user.dto';
 import { User } from './entity/user.entity';
 import * as bcrypt from 'bcrypt';
@@ -13,6 +13,18 @@ export class UserService {
 
   async findByFilds(options: FindOneOptions<User>): Promise<User | undefined> {
     return await this.userRepository.findOne(options);
+  }
+
+  // async findByAllFilds(): Promise<User | undefined> {
+  async findByAllFilds(): Promise<User[] | undefined> {
+    // return await this.userRepository.query(`
+    //   SELECT *
+    //   FROM user
+    // `);
+    const user = await this.userRepository.createQueryBuilder().select().getMany();
+    const userRef = await this.userRepository.createQueryBuilder().select().relation('vacation');
+    console.log('🚀 ~ file: user.service.ts:26 ~ findByAllFilds ~ userRef', userRef);
+    return user;
   }
 
   async update(text: unknown, options: unknown) {

@@ -3,7 +3,7 @@ import { Get, UseGuards } from '@nestjs/common/decorators';
 import { CreateApprovalDTO } from './dtos/create-approval.dto';
 import { ApprovalsService } from './approvals.service';
 import { Body, Controller, Post } from '@nestjs/common';
-import { GetCurrentUserId } from 'src/auth/decorators/get-current-userId.decorator';
+import { GetCurrentUserById } from 'src/auth/decorators/get-current-userById.decorator';
 import { AtGuard } from 'src/auth/security/at.guard';
 
 @Controller('approvals')
@@ -15,9 +15,9 @@ export class ApprovalsController {
    */
   @Post('/register')
   @UseGuards(AtGuard)
-  registerApproval(@Body() dto: CreateApprovalDTO, @GetCurrentUserId() userId: string) {
-    console.log('🚀 ~ file: approvals.controller.ts:18 ~ ApprovalsController ~ registerApproval ~ userId', userId);
-    return this.approvalsService.registerApproval(dto, userId);
+  registerApproval(@Body() dto: CreateApprovalDTO, @GetCurrentUserById() userById: string) {
+    console.log('🚀 ~ file: approvals.controller.ts:18 ~ ApprovalsController ~ registerApproval ~ userById', userById);
+    return this.approvalsService.registerApproval(dto, userById);
   }
   /**
    * TODO: 결재 승인

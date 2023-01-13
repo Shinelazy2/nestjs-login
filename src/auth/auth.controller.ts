@@ -4,11 +4,11 @@ import { AuthService } from './auth.service';
 import { Get, Body, Controller, Post, Req, Res, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { UserDTO } from './dtos/user.dto';
-import { HttpCode, UseGuards } from '@nestjs/common/decorators';
+import { HttpCode, Param, Query, UseGuards } from '@nestjs/common/decorators';
 import { AtGuard } from './security/at.guard';
 import { Public } from './decorators/public.decorator';
 import { RtGuard } from './security/rt.guard';
-import { GetCurrentUserId } from './decorators/get-current-userId.decorator';
+import { GetCurrentUserById } from './decorators/get-current-userById.decorator';
 import { GetCurrentUser } from './decorators/get-current-user.decorator';
 import { Roles } from './decorators/role.decorator';
 import { RoleType } from './role-type';
@@ -58,13 +58,13 @@ export class AuthController {
   @Post('/refresh')
   @HttpCode(HttpStatus.OK)
   async refreshTokens(
-    @GetCurrentUserId() userId: string,
+    @GetCurrentUserById() userById: string,
     @GetCurrentUser('refreshToken') refreshToken: string,
     @Res() res: Response,
   ) {
-    console.log('🚀 ~ file: auth.controller.ts:63 ~ AuthController ~ userId', userId);
+    console.log('🚀 ~ file: auth.controller.ts:63 ~ AuthController ~ userById', userById);
     console.log('🚀 ~ file: auth.controller.ts:59 ~ AuthController ~ refreshToken', refreshToken);
-    const jwt = await this.authService.refreshTokens(userId, refreshToken);
+    const jwt = await this.authService.refreshTokens(userById, refreshToken);
     console.log('🚀 ~ file: auth.controller.ts:60 ~ AuthController ~ jwt', jwt);
     res.cookie('jwt', jwt, {
       httpOnly: true,
@@ -103,5 +103,21 @@ export class AuthController {
   getCookieTest(@JwtCookies('access_token') cookie: string) {
     console.log('cookie : ', cookie);
     return cookie;
+  }
+
+  @Get('/userList')
+  async getUserList() {
+    return await this.authService.userList();
+  }
+
+  /**
+   * Param 과 Query의 차이는?
+   * Param -> /:id
+   * Query -> ?id=123
+   * @param userById
+   */
+  @Get('/getUser/:id')
+  async getUser(@Param('id') loginId: string) {
+    return this.authService.getUser(loginId);
   }
 }

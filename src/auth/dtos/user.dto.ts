@@ -4,7 +4,7 @@ export class UserDTO {
   id: string;
 
   @IsNotEmpty()
-  userId: string;
+  loginId: string;
 
   @IsNotEmpty()
   password: string;

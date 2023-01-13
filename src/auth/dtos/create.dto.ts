@@ -5,7 +5,7 @@ export class CreateUserDTO {
   id: string;
 
   @IsNotEmpty()
-  userId: string;
+  loginId: string;
 
   @IsString()
   userName: string;
