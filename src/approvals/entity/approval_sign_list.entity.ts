@@ -12,8 +12,8 @@ import {
 import { Approval } from './approval.entity';
 // import { UserAuthority } from './user-authority.entity';
 
-@Entity('is_approval_sign')
-export class IsApprovalSign {
+@Entity('approval_sign')
+export class ApprovalSign {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -34,7 +34,7 @@ export class IsApprovalSign {
   @UpdateDateColumn()
   signDate: Date;
 
-  @ManyToOne((type) => Approval, (approval) => approval.isApprovalSign)
+  @ManyToOne((type) => Approval, (approvalSign) => approvalSign.approvalSign)
   @JoinColumn({
     name: 'approval_join_id',
   })

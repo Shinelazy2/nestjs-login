@@ -1,4 +1,4 @@
-import { IsApprovalSign } from './entity/isApprovalSign.entity';
+import { ApprovalSign } from './entity/approval_sign_list.entity';
 import { Injectable } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,7 +12,7 @@ import { Approval } from './entity/approval.entity';
 export class ApprovalsService {
   constructor(
     @InjectRepository(Approval) private approvalRepository: Repository<Approval>,
-    @InjectRepository(IsApprovalSign) private isApprovalSignRepository: Repository<IsApprovalSign>,
+    @InjectRepository(ApprovalSign) private isApprovalSignRepository: Repository<ApprovalSign>,
     private vacationService: VacationService,
   ) {}
 
@@ -23,9 +23,8 @@ export class ApprovalsService {
    * @returns
    */
   async registerApproval(dto: CreateApprovalDTO, userById: string) {
-    const { approvalKinds, approver } = dto;
     let vacation = undefined;
-    if (approvalKinds === '휴가') {
+    if (dto.approvalKinds === '휴가') {
       vacation = await this.vacationService.findByFilds({
         where: {
           userJoinId: userById,
@@ -40,8 +39,8 @@ export class ApprovalsService {
     }
     const approval = this.approvalRepository.create();
     approval.repoter = userById;
-    approval.approver = approver;
-    approval.approvalKinds = approvalKinds;
+    approval.approver = dto.approver;
+    approval.approvalKinds = dto.approvalKinds;
     // Vacation Id
     approval.vacationJoinId = vacation.id;
     const saveApproval = await this.approvalRepository.save(approval);
@@ -56,7 +55,7 @@ export class ApprovalsService {
 
     await Promise.all([
       saveApproval.approver.forEach(async (value) => {
-        const isApprovalSign: IsApprovalSign = this.isApprovalSignRepository.create();
+        const isApprovalSign: ApprovalSign = this.isApprovalSignRepository.create();
         isApprovalSign.approvalJoinId = saveApproval.id;
         isApprovalSign.name = value;
         console.log('🚀 ~ file: approvals.service.ts:54 ~ ApprovalsService ~ approver.forEach ~ isApprovalSign', value);

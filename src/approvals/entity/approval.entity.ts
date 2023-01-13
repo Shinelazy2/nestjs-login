@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
 } from 'typeorm';
-import { IsApprovalSign } from './isApprovalSign.entity';
+import { ApprovalSign } from './approval_sign_list.entity';
 // import { UserAuthority } from './user-authority.entity';
 
 @Entity('approval')
@@ -41,8 +41,8 @@ export class Approval {
   })
   vacation?: Vacation;
 
-  @OneToMany((type) => IsApprovalSign, (isApprovalSign) => isApprovalSign.approval)
-  isApprovalSign?: IsApprovalSign[];
+  @OneToMany((type) => ApprovalSign, (approvalSign) => approvalSign.approval)
+  approvalSign?: ApprovalSign[];
 
   // @OneToMany((type) => UserAuthority, (userAuthority) => userAuthority.user, {
   //   eager: true,

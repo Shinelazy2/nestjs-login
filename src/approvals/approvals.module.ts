@@ -7,10 +7,10 @@ import { VacationService } from 'src/vacation/vacation.service';
 import { ApprovalsController } from './approvals.controller';
 import { ApprovalsService } from './approvals.service';
 import { Approval } from './entity/approval.entity';
-import { IsApprovalSign } from './entity/isApprovalSign.entity';
+import { ApprovalSign } from './entity/approval_sign_list.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Approval, Vacation, IsApprovalSign])],
+  imports: [TypeOrmModule.forFeature([Approval, Vacation, ApprovalSign])],
   controllers: [ApprovalsController],
   providers: [ApprovalsService, VacationService],
 })
